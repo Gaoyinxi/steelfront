@@ -1,5 +1,6 @@
 import { makeIntent, ControlIntent } from '../components/ControlIntent';
 import { Gun } from '../components/Gun';
+import { Modules, VehicleStatus } from '../components/Modules';
 import { PhysicsBodyRef } from '../components/PhysicsBody';
 import { TrackedMobility } from '../components/TrackedMobility';
 import { makeTransform, Transform } from '../components/Transform';
@@ -81,6 +82,8 @@ export function spawnVehicle(world: World, physics: PhysicsWorld, terrain: Heigh
   world.add(e, ControlIntent, makeIntent());
   world.add(e, Turret, { yaw: 0, prevYaw: 0, traverseFactor: 1 });
   world.add(e, Gun, makeGun(def, o.ammo));
+  world.add(e, Modules, { states: def.modules.map((m) => ({ hp: m.hp, maxHp: m.hp, destroyed: false })) });
+  world.add(e, VehicleStatus, { destroyed: false, cause: null, lastAttacker: null, destroyedFor: 0 });
   const wheel = () => ({ compression: 0, grounded: false });
   world.add(e, TrackedMobility, {
     powerFactor: 1,
@@ -94,4 +97,11 @@ export function spawnVehicle(world: World, physics: PhysicsWorld, terrain: Heigh
     restLength,
   });
   return e;
+}
+
+/** Removes a vehicle entity and its rigid body. */
+export function despawnVehicle(world: World, physics: PhysicsWorld, e: Entity): void {
+  const ref = world.get(e, PhysicsBodyRef);
+  if (ref) physics.removeBody(ref.bodyId);
+  world.destroy(e);
 }

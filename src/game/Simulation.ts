@@ -4,6 +4,8 @@ import { World } from '../ecs/World';
 import type { GameEvents } from './events';
 import { FireControlSystem } from '../systems/FireControlSystem';
 import { ProjectileSystem } from '../systems/ProjectileSystem';
+import { HitResolutionSystem } from '../systems/HitResolutionSystem';
+import { ModuleEffectSystem } from '../systems/ModuleEffectSystem';
 import type { System } from '../ecs/System';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import type { GameMap } from '../world/GameMap';
@@ -47,8 +49,12 @@ export class Simulation {
       }
     }
 
+    const moduleEffects = new ModuleEffectSystem(this.events);
     this.systems.push(
       new SnapshotSystem(),
+      // Derive capabilities (power, traverse, reload, can fire) from module
+      // health before anything uses them this tick.
+      moduleEffects,
       new MobilitySystem(physics),
       new TurretSystem(),
       new PhysicsStepSystem(physics),
@@ -56,6 +62,7 @@ export class Simulation {
       // swept against current body positions.
       new FireControlSystem(physics, this.events, this.rng),
       new ProjectileSystem(physics, map.height, this.events),
+      new HitResolutionSystem(physics, this.events, this.rng, moduleEffects),
     );
   }
 

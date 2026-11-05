@@ -218,6 +218,9 @@ body {
   gap: 4px;
 }
 .hud-hits .hit {
+  padding: 4px 14px 6px;
+  border-radius: 6px;
+  background: rgba(10, 12, 9, 0.62);
   font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -251,4 +254,22 @@ body {
 .hit-kill {
   color: var(--hud-accent);
   font-size: 26px;
+}
+.hud-modules {
+  left: 16px;
+  bottom: 96px;
+  padding: 8px;
+  text-align: center;
+}
+.hud-modules svg {
+  display: block;
+}
+.hud-modules .status {
+  font-size: 12px;
+  margin-top: 4px;
+  min-height: 16px;
+  color: var(--hud-dim);
+}
+.hud-modules .status.bad {
+  color: var(--hud-bad);
 }

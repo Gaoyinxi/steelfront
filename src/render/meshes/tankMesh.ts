@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { VehicleDef } from '../../data/schema';
 import { wheelMounts } from '../../game/vehicleGeometry';
+import { hullArmorHalf, turretCentreLocal } from '../../combat/armorModel';
 
 /** Scene-graph handles for one vehicle; driven by RenderSyncSystem. */
 export interface TankView {
@@ -10,6 +11,8 @@ export interface TankView {
   /** [side][index] road wheels, positioned from suspension compression. */
   wheels: THREE.Object3D[][];
   wheelRestY: number;
+  /** All materials owned by this view (for damage / wreck tinting). */
+  materials: THREE.MeshLambertMaterial[];
 }
 
 /**
@@ -68,7 +71,7 @@ export function createTankView(def: VehicleDef, color: number): TankView {
   turret.position.set(t.offset.x, t.offset.y, t.offset.z);
   root.add(turret);
   const turretBody = shadow(new THREE.Mesh(new THREE.BoxGeometry(t.half.x * 2, t.half.y * 2, t.half.z * 2), hullMat));
-  turretBody.position.y = t.half.y * 0.6;
+  turretBody.position.copy(turretCentreLocal(def) as THREE.Vector3);
   turret.add(turretBody);
   const bustle = shadow(new THREE.Mesh(new THREE.BoxGeometry(t.half.x * 1.6, t.half.y * 1.4, t.half.z * 0.6), darkMat));
   bustle.position.set(0, t.half.y * 0.6, t.half.z * 1.2);
@@ -94,25 +97,27 @@ export function createTankView(def: VehicleDef, color: number): TankView {
   brake.position.z = -g.length + 0.12;
   gun.add(brake);
 
-  return { root, turret, gun, wheels, wheelRestY };
+  return { root, turret, gun, wheels, wheelRestY, materials: [hullMat, darkMat, trackMat, metalMat] };
 }
 
-/** Extruded hull profile in the (z, y) plane; forward is -Z. */
+/**
+ * Extruded hull profile in the (z, y) plane; forward is -Z. Uses the same
+ * dimensions and plate slopes as the armour model (combat/armorModel.ts) so
+ * that what the player aims at is exactly what the shell hits.
+ */
 function createHullGeometry(def: VehicleDef): THREE.BufferGeometry {
-  const h = def.hull.half;
+  const h = hullArmorHalf(def);
   const deg = Math.PI / 180;
-  const lowerPlate = Math.min(0.35, h.y);
-  const frontRun = Math.min((2 * h.y - lowerPlate) * Math.tan(def.armor.hull.front.slopeDeg * deg), h.z * 0.7);
-  const rearRun = Math.min(2 * h.y * Math.tan(def.armor.hull.rear.slopeDeg * deg), h.z * 0.3);
+  const frontRun = 2 * h.y * Math.tan(def.armor.hull.front.slopeDeg * deg);
+  const rearRun = 2 * h.y * Math.tan(def.armor.hull.rear.slopeDeg * deg);
   const shape = new THREE.Shape();
   // Shape x = hull z, shape y = hull y.
   shape.moveTo(-h.z, -h.y);
-  shape.lineTo(-h.z, -h.y + lowerPlate);
   shape.lineTo(-h.z + frontRun, h.y);
   shape.lineTo(h.z - rearRun, h.y);
   shape.lineTo(h.z, -h.y);
   shape.closePath();
-  const width = h.x * 2 * 0.86;
+  const width = h.x * 2;
   const geo = new THREE.ExtrudeGeometry(shape, { depth: width, bevelEnabled: false });
   // Map shape x -> world z and the extrusion axis -> world x, centred.
   geo.rotateY(-Math.PI / 2);
@@ -120,3 +125,9 @@ function createHullGeometry(def: VehicleDef): THREE.BufferGeometry {
   geo.computeVertexNormals();
   return geo;
 }
+
+/** Darkens a view into a burnt-out wreck. */
+export function applyWreckLook(view: TankView): void {
+  for (const m of view.materials) m.color.multiplyScalar(0.28).offsetHSL(0, -0.3, 0);
+}
+

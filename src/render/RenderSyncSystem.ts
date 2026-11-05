@@ -6,7 +6,8 @@ import { Turret } from '../components/Turret';
 import { Vehicle } from '../components/Vehicle';
 import { lerp, wrapAngle } from '../core/math';
 import type { Entity, World } from '../ecs/World';
-import { createTankView, type TankView } from './meshes/tankMesh';
+import { applyWreckLook, createTankView, type TankView } from './meshes/tankMesh';
+import { VehicleStatus } from '../components/Modules';
 
 const TEAM_COLORS = { A: 0x5b6b3c, B: 0x8a7a55 } as const;
 
@@ -25,6 +26,7 @@ export interface InterpolatedVehicle {
 export class RenderSyncSystem {
   private readonly views = new Map<Entity, TankView>();
   private readonly cache = new Map<Entity, InterpolatedVehicle>();
+  private readonly wrecked = new Set<Entity>();
   private readonly qa = new THREE.Quaternion();
   private readonly qb = new THREE.Quaternion();
 
@@ -41,6 +43,10 @@ export class RenderSyncSystem {
         view.root.name = v.name;
         this.scene.add(view.root);
         this.views.set(e, view);
+      }
+      if (world.get(e, VehicleStatus)?.destroyed && !this.wrecked.has(e)) {
+        applyWreckLook(view);
+        this.wrecked.add(e);
       }
       const ip = this.interpolate(world, e, alpha);
       view.root.position.copy(ip.pos);
@@ -59,6 +65,7 @@ export class RenderSyncSystem {
       this.scene.remove(view.root);
       this.views.delete(e);
       this.cache.delete(e);
+      this.wrecked.delete(e);
     }
   }
 

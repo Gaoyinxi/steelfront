@@ -1,6 +1,8 @@
 import { Crosshair } from './Crosshair';
 import { HitFeedback, type HitKind } from './HitFeedback';
 import { ReloadBar, type WeaponFrame } from './ReloadBar';
+import { ModulePanel, type ModuleCondition } from './ModulePanel';
+import type { VehicleDef } from '../data/schema';
 
 export interface HudFrame {
   speedKmh: number;
@@ -13,6 +15,7 @@ export interface HudFrame {
   pointerLocked: boolean;
   fps: number;
   weapon: WeaponFrame;
+  modules: { conditions: ModuleCondition[]; status: string };
 }
 
 const SIGHT_SVG = `
@@ -35,8 +38,9 @@ export class Hud {
   private readonly start: HTMLDivElement;
   private readonly reload: ReloadBar;
   private readonly hits: HitFeedback;
+  private modulePanel: ModulePanel | null = null;
 
-  constructor(root: HTMLElement) {
+  constructor(private readonly root: HTMLElement) {
     this.sight = el('div', 'hud-sight');
     this.sight.innerHTML = SIGHT_SVG;
     this.zoom = el('div', 'zoom');
@@ -92,6 +96,12 @@ export class Hud {
     this.fps.textContent = `${Math.round(f.fps)} FPS`;
     this.start.classList.toggle('hidden', f.pointerLocked);
     this.reload.update(f.weapon);
+    this.modulePanel?.update(f.modules.conditions, f.modules.status);
+  }
+
+  /** Builds the module schematic for the player's vehicle. */
+  setPlayerVehicle(def: VehicleDef): void {
+    this.modulePanel = new ModulePanel(this.root, def);
   }
 
   showHit(text: string, kind: HitKind, detail?: string): void {

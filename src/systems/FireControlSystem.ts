@@ -82,6 +82,8 @@ export class FireControlSystem implements System {
         prevPos: { ...pose.muzzle },
         travelled: 0,
         age: 0,
+        ignore: e,
+        bounces: 0,
       });
 
       // Recoil: shell momentum applied at the trunnion.

@@ -14,6 +14,10 @@ export interface Projectile {
   travelled: number;
   /** Seconds since firing. */
   age: number;
+  /** Entity ignored for a short time (e.g. the vehicle a shell just ricocheted off). */
+  ignore: Entity | null;
+  /** Number of ricochets so far. */
+  bounces: number;
 }
 
 export const Projectile = defineComponent<Projectile>('Projectile');

@@ -9,6 +9,8 @@ interface Particle {
   endScale: number;
   startOpacity: number;
   velocity: THREE.Vector3;
+  /** Velocity damping per second. */
+  drag: number;
 }
 
 interface Flash {
@@ -86,6 +88,13 @@ export class Effects {
     this.flash(p, 0xff9a40, 80 * k, 0.18);
   }
 
+  /** One rising smoke puff above a burning wreck. */
+  wreckSmoke(pos: Vec3): void {
+    const p = this.v(pos).add(new THREE.Vector3((Math.random() - 0.5) * 1.5, 1.6, (Math.random() - 0.5) * 1.5));
+    const vel = new THREE.Vector3((Math.random() - 0.5) * 0.6, 2.2 + Math.random(), (Math.random() - 0.5) * 0.6);
+    this.spawn(p, 0x2b2926, { life: 4.5, s0: 0.8, s1: 4.5, opacity: 0.55, vel, drag: 0.15 });
+  }
+
   update(dt: number): void {
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const pt = this.particles[i];
@@ -98,7 +107,7 @@ export class Effects {
         continue;
       }
       pt.mesh.position.addScaledVector(pt.velocity, dt);
-      pt.velocity.multiplyScalar(Math.max(0, 1 - 2.5 * dt));
+      pt.velocity.multiplyScalar(Math.max(0, 1 - pt.drag * dt));
       const s = pt.startScale + (pt.endScale - pt.startScale) * (1 - (1 - t) * (1 - t));
       pt.mesh.scale.setScalar(s);
       (pt.mesh.material as THREE.MeshBasicMaterial).opacity = pt.startOpacity * (1 - t);
@@ -112,7 +121,7 @@ export class Effects {
   private spawn(
     pos: THREE.Vector3,
     color: number,
-    o: { life: number; s0: number; s1: number; opacity: number; vel?: THREE.Vector3; additive?: boolean },
+    o: { life: number; s0: number; s1: number; opacity: number; vel?: THREE.Vector3; additive?: boolean; drag?: number },
   ): void {
     const mat = new THREE.MeshBasicMaterial({
       color,
@@ -133,6 +142,7 @@ export class Effects {
       endScale: o.s1,
       startOpacity: o.opacity,
       velocity: o.vel ?? new THREE.Vector3(),
+      drag: o.drag ?? 2.5,
     });
   }
 

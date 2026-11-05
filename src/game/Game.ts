@@ -3,10 +3,10 @@ import { PlayerAim, PlayerControls } from '../components/resources';
 import { TrackedMobility } from '../components/TrackedMobility';
 import { Turret } from '../components/Turret';
 import { Gun } from '../components/Gun';
-import { Layer } from '../physics/PhysicsWorld';
 import { Effects } from '../render/effects/Effects';
 import { ProjectileRenderer } from '../render/effects/ProjectileRenderer';
-import type { GameEvents } from './events';
+import { CombatPresenter } from './CombatPresenter';
+import { PracticeRange } from './PracticeRange';
 import { ControlIntent } from '../components/ControlIntent';
 import { PhysicsBodyRef } from '../components/PhysicsBody';
 import { distance } from '../core/math';
@@ -50,9 +50,8 @@ export class Game {
   private readonly loop: GameLoop;
   private readonly effects: Effects;
   private readonly projectileRenderer: ProjectileRenderer;
-  /** Sim events are queued during fixed steps and presented in the next render. */
-  private readonly pendingShots: GameEvents['shotFired'][] = [];
-  private readonly pendingImpacts: GameEvents['projectileImpact'][] = [];
+  private readonly presenter: CombatPresenter;
+  private readonly range: PracticeRange;
   private fps = 60;
   private readonly tmpVec = new THREE.Vector3();
 
@@ -78,8 +77,6 @@ export class Game {
     this.hud = new Hud(hudRoot);
     this.effects = new Effects(this.renderer.scene);
     this.projectileRenderer = new ProjectileRenderer(this.renderer.scene);
-    this.sim.events.on('shotFired', (ev) => this.pendingShots.push(ev));
-    this.sim.events.on('projectileImpact', (ev) => this.pendingImpacts.push(ev));
 
     // --- Input -------------------------------------------------------------
     this.input = new InputDevice(this.renderer.canvas);
@@ -104,17 +101,12 @@ export class Game {
     world.add(this.player, PlayerControlled, {});
     this.cameraRig.yaw = toCentre;
 
-    // Stationary practice target until AI arrives in M5.
+    this.hud.setPlayerVehicle(def);
+    this.presenter = new CombatPresenter(this.sim, this.effects, this.hud, this.player);
+
+    // Stationary practice target (respawns when destroyed) until AI arrives in M5.
     const target = this.findVisibleSpot(ax, az, toCentre);
-    spawnVehicle(world, this.sim.physics, this.map.height, {
-      def,
-      team: 'B',
-      name: 'target-dummy',
-      x: target.x,
-      z: target.z,
-      heading: 0.6,
-      ammo: this.data.ammo,
-    });
+    this.range = new PracticeRange(this.sim, def, this.data.ammo, { ...target, heading: toCentre + Math.PI / 2 + 0.4 });
 
     this.loop = new GameLoop({
       fixedUpdate: (dt, tick) => this.fixedUpdate(dt, tick),
@@ -137,13 +129,14 @@ export class Game {
       if (this.input.isDown(`Digit${i + 1}`)) c.ammoSlot = i;
     }
     this.sim.fixedUpdate(dt, tick);
+    this.range.update();
   }
 
   private render(alpha: number, frameDt: number): void {
     const world = this.sim.world;
     this.renderSync.sync(world, alpha);
     this.projectileRenderer.sync(world, alpha);
-    this.presentEvents();
+    this.presenter.update(Math.min(frameDt, 0.1));
     this.effects.update(Math.min(frameDt, 0.1));
 
     const pose = this.renderSync.pose(this.player);
@@ -189,6 +182,7 @@ export class Game {
         pointerLocked: this.input.locked,
         fps: this.fps,
         weapon: this.weaponFrame(),
+        modules: this.presenter.playerModules(world),
       });
     }
 
@@ -206,21 +200,6 @@ export class Game {
       reloadProgress: loaded ? 1 : 1 - gun.reloadRemaining / Math.max(gun.reloadDuration, 1e-6),
       reloadRemaining: gun.reloadRemaining,
     };
-  }
-
-  private presentEvents(): void {
-    for (const ev of this.pendingShots) this.effects.muzzleFlash(ev.muzzle, ev.dir);
-    for (const ev of this.pendingImpacts) {
-      if (ev.ammo.explosiveMassKg > 0) this.effects.explosion(ev.point, ev.ammo.explosiveMassKg);
-      else if (ev.layer === Layer.Vehicle) this.effects.sparks(ev.point, ev.normal);
-      else this.effects.dustImpact(ev.point, ev.normal);
-      // Placeholder feedback until the armour model (M4) classifies hits.
-      if (ev.shooter === this.player && ev.target !== null) {
-        this.hud.showHit('命中', 'hit', `${Math.round(ev.distance)} m`);
-      }
-    }
-    this.pendingShots.length = 0;
-    this.pendingImpacts.length = 0;
   }
 
   private project(p: { x: number; y: number; z: number }): { x: number; y: number } | null {
