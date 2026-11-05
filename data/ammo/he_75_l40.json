@@ -1,0 +1,16 @@
+{
+  "id": "he_75_l40",
+  "displayName": "75mm HE M2",
+  "type": "HE",
+  "caliberMm": 75,
+  "massKg": 6.3,
+  "muzzleVelocity": 460,
+  "dragK": 0.00014,
+  "penetration": [
+    { "range": 10, "mm": 13 },
+    { "range": 2000, "mm": 13 }
+  ],
+  "ricochetAngleDeg": 79,
+  "normalizationDeg": 0,
+  "explosiveMassKg": 0.67
+}

@@ -1,0 +1,18 @@
+{
+  "id": "ap_75_l40",
+  "displayName": "75mm AP-T M1",
+  "type": "AP",
+  "caliberMm": 75,
+  "massKg": 6.8,
+  "muzzleVelocity": 620,
+  "dragK": 0.0001,
+  "penetration": [
+    { "range": 10, "mm": 92 },
+    { "range": 500, "mm": 81 },
+    { "range": 1000, "mm": 70 },
+    { "range": 2000, "mm": 52 }
+  ],
+  "ricochetAngleDeg": 70,
+  "normalizationDeg": 0,
+  "explosiveMassKg": 0
+}

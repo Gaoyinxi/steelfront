@@ -1,0 +1,30 @@
+{
+  "id": "meadow_01",
+  "displayName": "Ashford Meadows",
+  "seed": 1337,
+  "size": 1024,
+  "resolution": 513,
+  "terrain": {
+    "baseHeight": 0,
+    "hillAmplitude": 28,
+    "hillScale": 380,
+    "detailAmplitude": 1.6,
+    "detailScale": 28,
+    "octaves": 5,
+    "edgeRise": 40,
+    "edgeWidth": 90,
+    "playableMargin": 60
+  },
+  "obstacles": {
+    "rocks": 90,
+    "walls": 45,
+    "buildings": 14,
+    "treeClusters": 30,
+    "maxSlopeDeg": 18
+  },
+  "spawns": {
+    "teamA": [0, -380],
+    "teamB": [0, 380],
+    "clearRadius": 40
+  }
+}

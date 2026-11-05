@@ -1,0 +1,254 @@
+:root {
+  --hud-fg: #e9edd8;
+  --hud-dim: rgba(233, 237, 216, 0.6);
+  --hud-accent: #f2c14e;
+  --hud-bad: #e0573f;
+  --hud-good: #8fd16a;
+  --hud-panel: rgba(18, 22, 16, 0.55);
+  font-family: 'Segoe UI', 'Noto Sans SC', system-ui, sans-serif;
+}
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #11140f;
+}
+#app canvas {
+  display: block;
+}
+#hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  color: var(--hud-fg);
+  user-select: none;
+}
+.hud-crosshair {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  transform: translate(-50%, -50%);
+}
+.hud-crosshair::before,
+.hud-crosshair::after {
+  content: '';
+  position: absolute;
+  background: var(--hud-fg);
+  box-shadow: 0 0 2px #000;
+}
+.hud-crosshair::before {
+  left: 10px;
+  top: 0;
+  width: 2px;
+  height: 22px;
+}
+.hud-crosshair::after {
+  top: 10px;
+  left: 0;
+  width: 22px;
+  height: 2px;
+}
+.hud-gunmarker {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border: 2px solid var(--hud-accent);
+  border-radius: 50%;
+  box-shadow: 0 0 3px #000;
+  left: 50%;
+  top: 50%;
+}
+.hud-gunmarker.blocked {
+  border-color: var(--hud-bad);
+}
+.hud-sight {
+  position: absolute;
+  inset: 0;
+  display: none;
+  background: radial-gradient(circle at center, transparent 0 34vmin, rgba(0, 0, 0, 0.92) 34.3vmin);
+}
+.hud-sight.on {
+  display: block;
+}
+.hud-sight svg {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 68vmin;
+  height: 68vmin;
+  transform: translate(-50%, -50%);
+}
+.hud-sight .zoom {
+  position: absolute;
+  left: 50%;
+  bottom: 12vh;
+  transform: translateX(-50%);
+  font-size: 13px;
+  color: var(--hud-dim);
+}
+.hud-panel {
+  position: absolute;
+  background: var(--hud-panel);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.hud-status {
+  left: 16px;
+  bottom: 16px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.hud-status .speed {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  min-width: 92px;
+}
+.hud-status .speed small {
+  font-size: 12px;
+  color: var(--hud-dim);
+}
+.hud-help {
+  right: 16px;
+  top: 16px;
+  color: var(--hud-dim);
+  font-size: 12px;
+}
+.hud-help b {
+  color: var(--hud-fg);
+  font-weight: 600;
+}
+.hud-fps {
+  left: 16px;
+  top: 16px;
+  font-size: 12px;
+  color: var(--hud-dim);
+}
+.hud-start {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 12, 9, 0.45);
+  font-size: 18px;
+  letter-spacing: 0.04em;
+}
+.hud-start.hidden {
+  display: none;
+}
+.hud-weapon {
+  right: 16px;
+  bottom: 16px;
+  width: 230px;
+}
+.hud-weapon .slots {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.hud-weapon .slot {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border: 1px solid rgba(233, 237, 216, 0.25);
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.hud-weapon .slot.loaded {
+  border-color: var(--hud-good);
+}
+.hud-weapon .slot.loading {
+  border-color: var(--hud-accent);
+}
+.hud-weapon .slot.empty {
+  opacity: 0.4;
+}
+.hud-weapon .key {
+  font-size: 11px;
+  color: var(--hud-dim);
+}
+.hud-weapon .type {
+  font-weight: 700;
+}
+.hud-weapon .t-HE {
+  color: #ff9a5a;
+}
+.hud-weapon .t-AP,
+.hud-weapon .t-APHE {
+  color: #f2d27a;
+}
+.hud-weapon .count {
+  margin-left: auto;
+}
+.hud-weapon .reload {
+  height: 6px;
+  background: rgba(233, 237, 216, 0.15);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.hud-weapon .reload .fill {
+  height: 100%;
+  background: var(--hud-accent);
+}
+.hud-weapon .reload .fill.ready {
+  background: var(--hud-good);
+}
+.hud-weapon .label {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--hud-dim);
+}
+.hud-hits {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.hud-hits .hit {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 4px #000, 0 0 2px #000;
+  transition: opacity 0.6s;
+  text-align: center;
+}
+.hud-hits .hit small {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--hud-dim);
+  letter-spacing: 0;
+}
+.hud-hits .hit.fade {
+  opacity: 0;
+}
+.hit-hit,
+.hit-info {
+  color: var(--hud-fg);
+}
+.hit-penetration {
+  color: var(--hud-good);
+}
+.hit-nonPenetration {
+  color: var(--hud-bad);
+}
+.hit-ricochet {
+  color: #7fb8e6;
+}
+.hit-kill {
+  color: var(--hud-accent);
+  font-size: 26px;
+}

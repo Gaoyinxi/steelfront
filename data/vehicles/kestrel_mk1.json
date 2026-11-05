@@ -1,0 +1,75 @@
+{
+  "id": "kestrel_mk1",
+  "displayName": "Kestrel Mk.I",
+  "class": "medium",
+  "massKg": 30000,
+  "crew": ["commander", "gunner", "loader", "driver"],
+  "hull": {
+    "size": [2.9, 1.3, 5.9],
+    "groundClearance": 0.45
+  },
+  "mobility": {
+    "type": "tracked",
+    "enginePowerHp": 450,
+    "maxSpeedFwdKmh": 42,
+    "maxSpeedRevKmh": 12,
+    "pivotTurnRateDeg": 32,
+    "trackWidth": 2.55,
+    "trackLength": 4.4,
+    "suspension": {
+      "wheelsPerSide": 6,
+      "travel": 0.35,
+      "frequencyHz": 1.7,
+      "dampingRatio": 0.55
+    },
+    "friction": { "longitudinal": 1.0, "lateral": 0.85 }
+  },
+  "turret": {
+    "offset": [0, 0.65, 0.35],
+    "size": [2.2, 0.85, 2.5],
+    "yawSpeedDeg": 22,
+    "yawLimitsDeg": null
+  },
+  "gun": {
+    "offset": [0, 0.05, 1.25],
+    "length": 3.2,
+    "pitchMinDeg": -9,
+    "pitchMaxDeg": 22,
+    "pitchSpeedDeg": 8,
+    "reloadTimeS": 6.5,
+    "dispersionMoa": 1.2,
+    "ammo": [
+      { "id": "ap_75_l40", "count": 50 },
+      { "id": "he_75_l40", "count": 30 }
+    ]
+  },
+  "armor": {
+    "hull": {
+      "front": { "mm": 50, "slopeDeg": 56 },
+      "side": { "mm": 38, "slopeDeg": 0 },
+      "rear": { "mm": 38, "slopeDeg": 10 },
+      "top": { "mm": 19, "slopeDeg": 0 },
+      "bottom": { "mm": 13, "slopeDeg": 0 }
+    },
+    "turret": {
+      "front": { "mm": 76, "slopeDeg": 12 },
+      "side": { "mm": 50, "slopeDeg": 5 },
+      "rear": { "mm": 50, "slopeDeg": 0 },
+      "top": { "mm": 25, "slopeDeg": 0 },
+      "bottom": { "mm": 25, "slopeDeg": 0 }
+    }
+  },
+  "modules": [
+    { "type": "engine", "part": "hull", "pos": [0, 0.0, -2.0], "size": [1.9, 0.9, 1.3], "hp": 120 },
+    { "type": "transmission", "part": "hull", "pos": [0, -0.15, 2.45], "size": [1.6, 0.6, 0.6], "hp": 100 },
+    { "type": "turretRing", "part": "hull", "pos": [0, 0.55, 0.35], "size": [1.9, 0.15, 1.9], "hp": 90 },
+    { "type": "ammoRack", "part": "hull", "pos": [0.95, -0.1, 0.2], "size": [0.55, 0.7, 1.2], "hp": 60, "detonationChance": 0.35 },
+    { "type": "ammoRack", "part": "hull", "pos": [-0.95, -0.1, 0.2], "size": [0.55, 0.7, 1.2], "hp": 60, "detonationChance": 0.35 },
+    { "type": "fuelTank", "part": "hull", "pos": [0, 0.1, -1.0], "size": [2.2, 0.6, 0.5], "hp": 80 },
+    { "type": "gunBreech", "part": "turret", "pos": [0, 0.05, 0.1], "size": [0.45, 0.4, 1.1], "hp": 110 },
+    { "type": "crew", "role": "driver", "part": "hull", "pos": [-0.65, 0.05, 1.85], "size": [0.6, 0.9, 0.6], "hp": 100 },
+    { "type": "crew", "role": "gunner", "part": "turret", "pos": [-0.55, -0.1, 0.4], "size": [0.6, 0.9, 0.6], "hp": 100 },
+    { "type": "crew", "role": "commander", "part": "turret", "pos": [-0.5, 0.1, -0.5], "size": [0.6, 0.9, 0.6], "hp": 100 },
+    { "type": "crew", "role": "loader", "part": "turret", "pos": [0.6, -0.1, -0.1], "size": [0.6, 0.9, 0.6], "hp": 100 }
+  ]
+}
