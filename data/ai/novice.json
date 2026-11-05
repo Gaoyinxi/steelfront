@@ -1,0 +1,16 @@
+{
+  "id": "novice",
+  "displayName": "新兵",
+  "reactionTimeS": 2.5,
+  "viewDistance": 700,
+  "hearingDistance": 450,
+  "memoryS": 15,
+  "aimErrorMrad": 4.0,
+  "aimSettleTimeS": 3.5,
+  "rangeEstimateError": 0.1,
+  "leadEstimateError": 0.4,
+  "minAimTimeS": 1.5,
+  "fireToleranceMrad": 2.5,
+  "coverSearchRadius": 120,
+  "maxEngageDistance": 800
+}

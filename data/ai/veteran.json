@@ -1,0 +1,16 @@
+{
+  "id": "veteran",
+  "displayName": "老兵",
+  "reactionTimeS": 0.8,
+  "viewDistance": 1100,
+  "hearingDistance": 750,
+  "memoryS": 40,
+  "aimErrorMrad": 1.2,
+  "aimSettleTimeS": 1.8,
+  "rangeEstimateError": 0.03,
+  "leadEstimateError": 0.1,
+  "minAimTimeS": 0.5,
+  "fireToleranceMrad": 1.0,
+  "coverSearchRadius": 220,
+  "maxEngageDistance": 1300
+}

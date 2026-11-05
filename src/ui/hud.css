@@ -273,3 +273,60 @@ body {
 .hud-modules .status.bad {
   color: var(--hud-bad);
 }
+.hud-markers {
+  position: absolute;
+  inset: 0;
+}
+.hud-marker {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  color: #ff5a43;
+  text-align: center;
+  text-shadow: 0 0 3px #000;
+  line-height: 1.1;
+}
+.hud-marker .arrow {
+  display: block;
+  font-size: 14px;
+}
+.hud-marker .range {
+  display: block;
+  font-size: 11px;
+  color: var(--hud-fg);
+}
+.hud-match {
+  left: 50%;
+  top: 16px;
+  transform: translateX(-50%);
+  font-size: 14px;
+}
+.hud-result {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  transform: translate(-50%, -50%);
+  display: none;
+  padding: 18px 40px;
+  border-radius: 10px;
+  background: rgba(10, 12, 9, 0.72);
+  text-align: center;
+}
+.hud-result.on {
+  display: block;
+}
+.hud-result .title {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+}
+.hud-result .title.win {
+  color: var(--hud-accent);
+}
+.hud-result .title.lose {
+  color: var(--hud-bad);
+}
+.hud-result .sub {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--hud-dim);
+}

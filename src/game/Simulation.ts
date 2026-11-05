@@ -9,9 +9,11 @@ import { ModuleEffectSystem } from '../systems/ModuleEffectSystem';
 import type { System } from '../ecs/System';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import type { GameMap } from '../world/GameMap';
+import { roofHeight } from '../world/obstacles';
 import { MobilitySystem } from '../systems/MobilitySystem';
 import { PhysicsStepSystem, SnapshotSystem } from '../systems/PhysicsSyncSystem';
 import { TurretSystem } from '../systems/TurretSystem';
+import { AISystem } from '../systems/AISystem';
 
 /**
  * Headless simulation: ECS world + physics + ordered systems.
@@ -26,6 +28,8 @@ export class Simulation {
   private readonly systems: System[] = [];
   /** Systems that produce ControlIntents (player input, AI); run before vehicle systems. */
   private readonly inputSystems: System[] = [];
+  /** AI commanders; also exposes the navigation grid. */
+  readonly ai: AISystem;
 
   constructor(
     readonly physics: PhysicsWorld,
@@ -47,11 +51,25 @@ export class Simulation {
           dims: { x: (o.size.x / 2) * shrink, y: (o.size.y / 2) * shrink, z: (o.size.z / 2) * shrink },
         });
       }
+      // Pitched roof: two stacked boxes approximate the gable so the roof
+      // blocks shells and line of sight like it looks.
+      const rh = roofHeight(o);
+      for (const [frac, width] of rh > 0 ? ([[0.25, 0.75], [0.65, 0.35]] as const) : []) {
+        physics.addStatic({
+          shape: 'box',
+          position: { x: o.position.x, y: o.position.y + o.size.y + rh * frac, z: o.position.z },
+          rotationY: o.rotationY,
+          dims: { x: (o.size.x / 2) * 1.04, y: rh * 0.2, z: (o.size.z / 2) * width },
+        });
+      }
     }
 
     const moduleEffects = new ModuleEffectSystem(this.events);
+    this.ai = new AISystem(physics, map, this.events, this.rng);
     this.systems.push(
       new SnapshotSystem(),
+      // AI writes ControlIntents, like player input (which runs just before it).
+      this.ai,
       // Derive capabilities (power, traverse, reload, can fire) from module
       // health before anything uses them this tick.
       moduleEffects,

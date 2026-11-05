@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { Obstacle, ObstacleKind } from '../../world/obstacles';
+import { roofHeight, type Obstacle, type ObstacleKind } from '../../world/obstacles';
 
 /** Placeholder obstacle visuals, batched as one InstancedMesh per part. */
 export function createObstacleMeshes(obstacles: Obstacle[]): THREE.Group {
@@ -50,13 +50,18 @@ export function createObstacleMeshes(obstacles: Obstacle[]): THREE.Group {
   // Buildings: body + darker pitched roof.
   const buildings = byKind('building');
   batch(buildings, unitBox, new THREE.MeshLambertMaterial({ color: 0xc7b99a }), centred);
-  const roofGeo = new THREE.CylinderGeometry(0.5, 0.5, 1, 3, 1);
-  roofGeo.rotateZ(Math.PI / 2);
-  roofGeo.rotateX(Math.PI / 2);
-  roofGeo.rotateY(Math.PI / 2);
+  // Gabled roof: a unit triangular prism (apex up, ridge along local X).
+  const gable = new THREE.Shape();
+  gable.moveTo(-0.5, 0);
+  gable.lineTo(0.5, 0);
+  gable.lineTo(0, 1);
+  gable.closePath();
+  const roofGeo = new THREE.ExtrudeGeometry(gable, { depth: 1, bevelEnabled: false });
+  roofGeo.translate(0, 0, -0.5);
+  roofGeo.rotateY(Math.PI / 2); // ridge along the building's long (local X) axis
   batch(buildings, roofGeo, new THREE.MeshLambertMaterial({ color: 0x6e3b2e, flatShading: true }), (o) => ({
-    pos: new THREE.Vector3(o.position.x, o.position.y + o.size.y + o.size.x * 0.2, o.position.z),
-    scale: new THREE.Vector3(o.size.x * 1.08, o.size.x * 0.55, o.size.z * 1.08),
+    pos: new THREE.Vector3(o.position.x, o.position.y + o.size.y, o.position.z),
+    scale: new THREE.Vector3(o.size.x * 1.04, roofHeight(o), o.size.z * 1.08),
     rotY: o.rotationY,
   }));
 

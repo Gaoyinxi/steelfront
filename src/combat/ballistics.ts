@@ -86,12 +86,82 @@ export function vacuumTimeOfFlight(v0: number, elevation: number, g = GRAVITY): 
   return (2 * v0 * Math.sin(elevation)) / g;
 }
 
+/** Height and time at which a trajectory reaches horizontal distance `dx`; null if it never does. */
+function stateAtRange(
+  v0: number,
+  elev: number,
+  dx: number,
+  dragK: number,
+  dt: number,
+  g: number,
+): { y: number; t: number } | null {
+  let s: ShellState = { pos: { x: 0, y: 0, z: 0 }, vel: { x: v0 * Math.cos(elev), y: v0 * Math.sin(elev), z: 0 } };
+  for (let t = 0; t < 30; t += dt) {
+    const n = stepShell(s, dt, dragK, g);
+    if (n.pos.x >= dx) {
+      const f = (dx - s.pos.x) / (n.pos.x - s.pos.x);
+      return { y: s.pos.y + (n.pos.y - s.pos.y) * f, t: t + f * dt };
+    }
+    if (n.vel.x <= 0) return null;
+    s = n;
+  }
+  return null;
+}
+
+export interface FiringSolution {
+  /** Launch elevation relative to horizontal (radians). */
+  elevation: number;
+  /** Time for the shell to reach the target's horizontal distance (s). */
+  timeOfFlight: number;
+}
+
+export interface SolveOptions {
+  dt?: number;
+  g?: number;
+  /** Bisection iterations; 22 gives ~2e-7 rad, plenty for gunnery. */
+  iterations?: number;
+}
+
 /**
- * Elevation angle (radians, relative to horizontal) needed to hit a point at
- * horizontal distance `dx` and height difference `dy`, using the low arc.
- * Solved numerically by bisection on the simulated trajectory, so it accounts
- * for drag. Returns null if the target is out of range.
+ * Elevation (low arc) and time of flight needed to hit a point at horizontal
+ * distance `dx` and height difference `dy`. Solved numerically by bisection
+ * on the simulated trajectory, so it accounts for drag. Returns null if the
+ * target is out of range.
  */
+export function solveFiringSolution(
+  v0: number,
+  dx: number,
+  dy: number,
+  dragK: number,
+  opts: SolveOptions = {},
+): FiringSolution | null {
+  const dt = opts.dt ?? 1 / 120;
+  const g = opts.g ?? GRAVITY;
+  const iterations = opts.iterations ?? 40;
+  const heightAt = (elev: number) => stateAtRange(v0, elev, dx, dragK, dt, g)?.y ?? null;
+
+  let lo = Math.atan2(dy, dx) - 0.05;
+  let hi = Math.PI / 4;
+  const hHi = heightAt(hi);
+  if (hHi === null || hHi < dy) return null;
+  const hLo = heightAt(lo);
+  let elevation: number;
+  if (hLo !== null && hLo > dy) {
+    elevation = lo;
+  } else {
+    for (let i = 0; i < iterations; i++) {
+      const mid = (lo + hi) / 2;
+      const h = heightAt(mid);
+      if (h !== null && h > dy) hi = mid;
+      else lo = mid;
+    }
+    elevation = (lo + hi) / 2;
+  }
+  const at = stateAtRange(v0, elevation, dx, dragK, dt, g);
+  return at ? { elevation, timeOfFlight: at.t } : null;
+}
+
+/** Elevation-only convenience wrapper around `solveFiringSolution`. */
 export function solveElevation(
   v0: number,
   dx: number,
@@ -100,34 +170,7 @@ export function solveElevation(
   dt = 1 / 120,
   g = GRAVITY,
 ): number | null {
-  // Height of the trajectory when it reaches horizontal distance dx.
-  const heightAt = (elev: number): number | null => {
-    let s: ShellState = { pos: { x: 0, y: 0, z: 0 }, vel: { x: v0 * Math.cos(elev), y: v0 * Math.sin(elev), z: 0 } };
-    for (let t = 0; t < 30; t += dt) {
-      const n = stepShell(s, dt, dragK, g);
-      if (n.pos.x >= dx) {
-        const f = (dx - s.pos.x) / (n.pos.x - s.pos.x);
-        return s.pos.y + (n.pos.y - s.pos.y) * f;
-      }
-      if (n.vel.x <= 0) return null;
-      s = n;
-    }
-    return null;
-  };
-
-  let lo = Math.atan2(dy, dx) - 0.05;
-  let hi = Math.PI / 4;
-  const hHi = heightAt(hi);
-  if (hHi === null || hHi < dy) return null;
-  const hLo = heightAt(lo);
-  if (hLo !== null && hLo > dy) return lo;
-  for (let i = 0; i < 40; i++) {
-    const mid = (lo + hi) / 2;
-    const h = heightAt(mid);
-    if (h !== null && h > dy) hi = mid;
-    else lo = mid;
-  }
-  return (lo + hi) / 2;
+  return solveFiringSolution(v0, dx, dy, dragK, { dt, g })?.elevation ?? null;
 }
 
 /** 1 MOA in radians. */

@@ -56,4 +56,7 @@ export interface GameEvents {
     cause: DestroyCause;
     killer: Entity | null;
   };
+  matchEnded: {
+    result: 'victory' | 'defeat';
+  };
 }

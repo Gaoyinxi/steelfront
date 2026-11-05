@@ -19,6 +19,11 @@ export interface Obstacle {
   solid: boolean;
 }
 
+/** Height of a building's pitched roof above its walls (shared by rendering and physics). */
+export function roofHeight(o: Obstacle): number {
+  return o.kind === 'building' ? Math.min(o.size.x, o.size.z) * 0.35 : 0;
+}
+
 interface Placement {
   kind: ObstacleKind;
   size: Vec3;

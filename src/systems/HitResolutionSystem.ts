@@ -80,9 +80,12 @@ export class HitResolutionSystem implements System {
           residualMm: r.residualMm,
           rng: this.rng,
         });
-        const applied = applyModuleDamage(world, target, damage, this.rng);
         const states = world.req(target, Modules).states;
+        const wasDestroyed = states.map((st) => st.destroyed);
+        const applied = applyModuleDamage(world, target, damage, this.rng);
+        // Report only what this hit changed: newly damaged or newly destroyed modules.
         for (const d of damage) {
+          if (wasDestroyed[d.index]) continue;
           const m = def.modules[d.index];
           damagedModules.push({ type: m.type, role: m.role, destroyed: states[d.index].destroyed });
         }

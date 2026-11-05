@@ -4,7 +4,7 @@ async function bootstrap(): Promise<void> {
   const app = document.getElementById('app');
   const hud = document.getElementById('hud');
   if (!app || !hud) throw new Error('Missing #app / #hud containers');
-  const game = await Game.create(app, hud, { mapId: 'meadow_01', playerVehicleId: 'kestrel_mk1' });
+  const game = await Game.create(app, hud, { mapId: 'meadow_01' });
   game.start();
   if (import.meta.env.DEV) (window as unknown as { __game: Game }).__game = game;
 }

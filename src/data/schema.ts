@@ -149,11 +149,45 @@ export const mapSchema = z.object({
     teamB: z.tuple([z.number(), z.number()]),
     clearRadius: z.number().nonnegative(),
   }),
+  match: z.object({
+    playerVehicle: z.string(),
+    enemyVehicle: z.string(),
+    enemyCount: z.number().int().min(0).max(8),
+    aiSkill: z.string(),
+  }),
+});
+
+/** AI difficulty profile (data/ai/*.json). */
+export const aiSkillSchema = z.object({
+  id: z.string(),
+  displayName: z.string(),
+  /** Base time to recognise a fully visible target at close range (s). */
+  reactionTimeS: z.number().positive(),
+  viewDistance: z.number().positive(),
+  /** Gunfire within this distance alerts the AI to the shooter's rough position. */
+  hearingDistance: z.number().nonnegative(),
+  /** How long a lost contact is remembered (s). */
+  memoryS: z.number().positive(),
+  /** 1-sigma angular aiming error per axis once fully settled (milliradians). */
+  aimErrorMrad: z.number().nonnegative(),
+  /** Time constant over which the initial (3x larger) aim error settles (s). */
+  aimSettleTimeS: z.number().positive(),
+  /** 1-sigma relative range estimation error (0.05 = 5 %). */
+  rangeEstimateError: z.number().min(0).max(0.5),
+  /** 1-sigma relative error of the target-velocity estimate used for lead. */
+  leadEstimateError: z.number().min(0).max(1),
+  /** Minimum time on target before firing (s). */
+  minAimTimeS: z.number().nonnegative(),
+  /** Barrel must be within this angle of the solution to fire (milliradians). */
+  fireToleranceMrad: z.number().positive(),
+  coverSearchRadius: z.number().positive(),
+  maxEngageDistance: z.number().positive(),
 });
 
 export type AmmoJson = z.infer<typeof ammoSchema>;
 export type VehicleJson = z.infer<typeof vehicleSchema>;
 export type MapDef = z.infer<typeof mapSchema>;
+export type AISkill = z.infer<typeof aiSkillSchema>;
 export type AmmoType = z.infer<typeof ammoTypeSchema>;
 export type CrewRole = z.infer<typeof crewRoleSchema>;
 export type ModuleType = z.infer<typeof moduleTypeSchema>;
@@ -267,4 +301,8 @@ export function parseVehicle(json: unknown): VehicleDef {
 
 export function parseMap(json: unknown): MapDef {
   return mapSchema.parse(json);
+}
+
+export function parseAISkill(json: unknown): AISkill {
+  return aiSkillSchema.parse(json);
 }

@@ -1,0 +1,16 @@
+{
+  "id": "regular",
+  "displayName": "常规",
+  "reactionTimeS": 1.4,
+  "viewDistance": 900,
+  "hearingDistance": 600,
+  "memoryS": 25,
+  "aimErrorMrad": 2.2,
+  "aimSettleTimeS": 2.5,
+  "rangeEstimateError": 0.05,
+  "leadEstimateError": 0.2,
+  "minAimTimeS": 0.8,
+  "fireToleranceMrad": 1.5,
+  "coverSearchRadius": 170,
+  "maxEngageDistance": 1100
+}

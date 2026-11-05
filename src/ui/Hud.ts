@@ -3,6 +3,8 @@ import { HitFeedback, type HitKind } from './HitFeedback';
 import { ReloadBar, type WeaponFrame } from './ReloadBar';
 import { ModulePanel, type ModuleCondition } from './ModulePanel';
 import type { VehicleDef } from '../data/schema';
+import { EnemyMarkers, type MarkerView } from './EnemyMarkers';
+import { MatchStatus, type MatchOutcome } from './MatchStatus';
 
 export interface HudFrame {
   speedKmh: number;
@@ -16,6 +18,8 @@ export interface HudFrame {
   fps: number;
   weapon: WeaponFrame;
   modules: { conditions: ModuleCondition[]; status: string };
+  enemies: { remaining: number; total: number };
+  markers: MarkerView[];
 }
 
 const SIGHT_SVG = `
@@ -39,8 +43,12 @@ export class Hud {
   private readonly reload: ReloadBar;
   private readonly hits: HitFeedback;
   private modulePanel: ModulePanel | null = null;
+  private readonly markers: EnemyMarkers;
+  private readonly match: MatchStatus;
 
   constructor(private readonly root: HTMLElement) {
+    // Markers sit underneath the gunsight vignette and the rest of the HUD.
+    this.markers = new EnemyMarkers(root);
     this.sight = el('div', 'hud-sight');
     this.sight.innerHTML = SIGHT_SVG;
     this.zoom = el('div', 'zoom');
@@ -63,6 +71,7 @@ export class Hud {
     root.appendChild(status);
 
     this.reload = new ReloadBar(root);
+    this.match = new MatchStatus(root);
     this.hits = new HitFeedback(root);
 
     const help = el('div', 'hud-panel hud-help');
@@ -74,6 +83,7 @@ export class Hud {
       '<b>1 / 2</b> 选择弹种（AP / HE）',
       '<b>右键按住</b> 炮镜视角',
       '<b>滚轮</b> 视距 / 炮镜倍率',
+      '<b>R</b> 对局结束后重新开始',
       '<b>Esc</b> 释放鼠标',
     ].join('<br>');
     root.appendChild(help);
@@ -97,6 +107,12 @@ export class Hud {
     this.start.classList.toggle('hidden', f.pointerLocked);
     this.reload.update(f.weapon);
     this.modulePanel?.update(f.modules.conditions, f.modules.status);
+    this.markers.update(f.markers);
+    this.match.update(f.enemies.remaining, f.enemies.total);
+  }
+
+  showResult(result: MatchOutcome): void {
+    this.match.showResult(result);
   }
 
   /** Builds the module schematic for the player's vehicle. */

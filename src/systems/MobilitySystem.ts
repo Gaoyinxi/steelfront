@@ -16,8 +16,19 @@ const SLIP_BRAKE = 0.06;
 const SLIP_LAT = 0.35;
 /** Integral gain of the brake hold (1/s). */
 const BRAKE_KI = 4;
+/** Below this speed the lateral hold integrator is active (m/s). */
+const LATERAL_HOLD_SPEED = 2;
 /** Minimum speed used in the power limit, so standing starts have finite force. */
 const POWER_MIN_SPEED = 1.5;
+
+/**
+ * Reversing inverts the steering sense (car-like): while backing up, steering
+ * right swings the tail right. Shared with the AI driving controller so both
+ * agree on the convention.
+ */
+export function steeringInverted(forwardSpeed: number, throttle: number): boolean {
+  return forwardSpeed < -0.5 && throttle < 0;
+}
 
 /**
  * Tracked-vehicle running gear (decision 2A): a rigid hull supported by
@@ -60,8 +71,7 @@ export class MobilitySystem implements System {
       // Pivot turn at standstill; wider turning radius as speed rises.
       const turnRate = ((m.pivotTurnRateDeg * Math.PI) / 180) * (1 - 0.45 * speedRatio);
       const dv = steer * turnRate * (m.trackWidth / 2) * Math.max(mob.powerFactor, 0.15);
-      // Reversing inverts the steering sense so A/D always turn the nose the intuitive way.
-      const dir = mob.forwardSpeed < -0.5 && throttle < 0 ? -1 : 1;
+      const dir = steeringInverted(mob.forwardSpeed, throttle) ? -1 : 1;
       const target = [base + dv * dir, base - dv * dir]; // [left, right]
 
       // --- Pass 1: suspension & contact gathering ------------------------
@@ -107,10 +117,12 @@ export class MobilitySystem implements System {
         l: Vec3;
         side: number;
         vLong: number;
+        vLat: number;
         fLong: number;
         fLat: number;
         accel: boolean;
         limitLong: number;
+        limitLat: number;
         limit: number;
       };
       const drives: Drive[] = [];
@@ -140,10 +152,12 @@ export class MobilitySystem implements System {
           l,
           side: c.side,
           vLong,
+          vLat,
           fLong,
           fLat,
           accel,
           limitLong,
+          limitLat,
           limit: Math.max(limitLong, limitLat),
         });
       }
@@ -159,6 +173,21 @@ export class MobilitySystem implements System {
         const limit = own.reduce((acc, d) => acc + d.limitLong, 0);
         mob.brakeHold[side] = clamp(mob.brakeHold[side] - vAvg * maxGain * own.length * BRAKE_KI * dt, -limit, limit);
         for (const d of own) d.fLong = clamp(d.fLong + mob.brakeHold[side] / own.length, -d.limitLong, d.limitLong);
+      }
+
+      // Integral lateral hold: the proportional lateral friction needs a small
+      // sideways slip to generate force, which shows up as slow creep down a
+      // side slope while parked. Active only at low speed.
+      for (let side = 0; side < 2; side++) {
+        const own = drives.filter((d) => d.side === side);
+        if (Math.abs(mob.forwardSpeed) >= LATERAL_HOLD_SPEED || own.length === 0) {
+          mob.lateralHold[side] = 0;
+          continue;
+        }
+        const vAvg = own.reduce((acc, d) => acc + d.vLat, 0) / own.length;
+        const limit = own.reduce((acc, d) => acc + d.limitLat, 0);
+        mob.lateralHold[side] = clamp(mob.lateralHold[side] - vAvg * maxGain * own.length * BRAKE_KI * dt, -limit, limit);
+        for (const d of own) d.fLat = clamp(d.fLat + mob.lateralHold[side] / own.length, -d.limitLat, d.limitLat);
       }
 
       const powerAvail = m.enginePowerW * mob.powerFactor;

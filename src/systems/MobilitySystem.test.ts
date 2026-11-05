@@ -14,10 +14,11 @@ const DT = 1 / 60;
 const data = loadGameData();
 const def = data.vehicles.get('kestrel_mk1')!;
 
-function flatSim(slopeDeg = 0) {
+function flatSim(slopeDeg = 0, axis: 'z' | 'x' = 'z') {
   const hm = new HeightMap(600, 151);
   const k = Math.tan((slopeDeg * Math.PI) / 180);
-  for (let iz = 0; iz < 151; iz++) for (let ix = 0; ix < 151; ix++) hm.heights[iz * 151 + ix] = -hm.worldZ(iz) * k;
+  for (let iz = 0; iz < 151; iz++)
+    for (let ix = 0; ix < 151; ix++) hm.heights[iz * 151 + ix] = axis === 'z' ? -hm.worldZ(iz) * k : -hm.worldX(ix) * k;
   hm.recomputeBounds();
   const map = { def: data.maps.get('meadow_01')!, height: hm, obstacles: [], cover: [] } as GameMap;
   const sim = new Simulation(new RapierWorld(), map);
@@ -77,6 +78,15 @@ describe('MobilitySystem (tracked running gear)', () => {
     expect(rate).toBeLessThan(0); // right turn = clockwise from above = negative yaw
     expect(Math.abs(rate)).toBeGreaterThan(def.mobility.pivotTurnRateDeg * 0.6);
     expect(Math.abs(rate)).toBeLessThan(def.mobility.pivotTurnRateDeg * 1.2);
+  });
+
+  it('does not creep sideways when parked across a 25° side slope', () => {
+    // Slope falls towards +X; the tank faces -Z, so the slope is across its hull.
+    const { sim, e } = flatSim(25, 'x');
+    run(sim, 4);
+    const x0 = sim.world.req(e, Transform).pos.x;
+    run(sim, 10);
+    expect(Math.abs(sim.world.req(e, Transform).pos.x - x0)).toBeLessThan(0.3);
   });
 
   it('holds position on a 15° slope with zero throttle and climbs it', () => {

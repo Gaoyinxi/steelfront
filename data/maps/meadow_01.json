@@ -23,8 +23,20 @@
     "maxSlopeDeg": 18
   },
   "spawns": {
-    "teamA": [0, -380],
-    "teamB": [0, 380],
+    "teamA": [
+      0,
+      -380
+    ],
+    "teamB": [
+      0,
+      380
+    ],
     "clearRadius": 40
+  },
+  "match": {
+    "playerVehicle": "kestrel_mk1",
+    "enemyVehicle": "kestrel_mk1",
+    "enemyCount": 3,
+    "aiSkill": "regular"
   }
 }

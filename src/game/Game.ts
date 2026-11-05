@@ -6,7 +6,9 @@ import { Gun } from '../components/Gun';
 import { Effects } from '../render/effects/Effects';
 import { ProjectileRenderer } from '../render/effects/ProjectileRenderer';
 import { CombatPresenter } from './CombatPresenter';
-import { PracticeRange } from './PracticeRange';
+import { MatchDirector } from './MatchDirector';
+import { PlayerAwareness } from './PlayerAwareness';
+import type { MarkerView } from '../ui/EnemyMarkers';
 import { ControlIntent } from '../components/ControlIntent';
 import { PhysicsBodyRef } from '../components/PhysicsBody';
 import { distance } from '../core/math';
@@ -30,7 +32,6 @@ import { gunPoseWorld } from './vehicleGeometry';
 
 export interface GameOptions {
   mapId: string;
-  playerVehicleId: string;
 }
 
 /**
@@ -51,7 +52,9 @@ export class Game {
   private readonly effects: Effects;
   private readonly projectileRenderer: ProjectileRenderer;
   private readonly presenter: CombatPresenter;
-  private readonly range: PracticeRange;
+  private readonly director: MatchDirector;
+  private readonly awareness: PlayerAwareness;
+  private matchOver = false;
   private fps = 60;
   private readonly tmpVec = new THREE.Vector3();
 
@@ -85,8 +88,8 @@ export class Game {
     this.sim.addInputSystem(new PlayerInputSystem(this.sim.physics));
 
     // --- Entities ----------------------------------------------------------
-    const def = this.data.vehicles.get(opts.playerVehicleId);
-    if (!def) throw new Error(`Unknown vehicle ${opts.playerVehicleId}`);
+    const def = this.data.vehicles.get(mapDef.match.playerVehicle);
+    if (!def) throw new Error(`Unknown vehicle ${mapDef.match.playerVehicle}`);
     const [ax, az] = mapDef.spawns.teamA;
     const toCentre = Math.atan2(ax, az); // heading that faces the map centre
     this.player = spawnVehicle(world, this.sim.physics, this.map.height, {
@@ -104,9 +107,13 @@ export class Game {
     this.hud.setPlayerVehicle(def);
     this.presenter = new CombatPresenter(this.sim, this.effects, this.hud, this.player);
 
-    // Stationary practice target (respawns when destroyed) until AI arrives in M5.
-    const target = this.findVisibleSpot(ax, az, toCentre);
-    this.range = new PracticeRange(this.sim, def, this.data.ammo, { ...target, heading: toCentre + Math.PI / 2 + 0.4 });
+    // Enemy AI platoon and win / lose conditions.
+    this.director = new MatchDirector(this.sim, this.data, mapDef, this.player);
+    this.awareness = new PlayerAwareness(this.sim, this.player);
+    this.sim.events.on('matchEnded', (ev) => {
+      this.matchOver = true;
+      this.hud.showResult(ev.result);
+    });
 
     this.loop = new GameLoop({
       fixedUpdate: (dt, tick) => this.fixedUpdate(dt, tick),
@@ -129,7 +136,8 @@ export class Game {
       if (this.input.isDown(`Digit${i + 1}`)) c.ammoSlot = i;
     }
     this.sim.fixedUpdate(dt, tick);
-    this.range.update();
+    this.director.update();
+    if (this.matchOver && this.input.isDown('KeyR')) window.location.reload();
   }
 
   private render(alpha: number, frameDt: number): void {
@@ -183,6 +191,8 @@ export class Game {
         fps: this.fps,
         weapon: this.weaponFrame(),
         modules: this.presenter.playerModules(world),
+        enemies: { remaining: this.director.remaining, total: this.director.total },
+        markers: this.enemyMarkers(frameDt),
       });
     }
 
@@ -208,36 +218,17 @@ export class Game {
     return { x: ((v.x + 1) / 2) * window.innerWidth, y: ((1 - v.y) / 2) * window.innerHeight };
   }
 
-  /** A clear spot 150–400 m ahead of the spawn with line of sight from it. */
-  private findVisibleSpot(x: number, z: number, heading: number): { x: number; z: number } {
-    const hm = this.map.height;
-    const eye = { x, y: hm.sample(x, z) + 3, z };
-    for (let d = 150; d <= 400; d += 25) {
-      for (const off of [0, -0.15, 0.15, -0.3, 0.3]) {
-        const a = heading + off;
-        const px = x - Math.sin(a) * d;
-        const pz = z - Math.cos(a) * d;
-        if (!this.map.obstacles.every((o) => Math.hypot(o.position.x - px, o.position.z - pz) > o.radius + 10)) continue;
-        if (hm.slope(px, pz) > 0.25) continue;
-        const to = { x: px - eye.x, y: hm.sample(px, pz) + 1.5 - eye.y, z: pz - eye.z };
-        const len = Math.hypot(to.x, to.y, to.z);
-        const hit = this.sim.physics.raycast(eye, { x: to.x / len, y: to.y / len, z: to.z / len }, len);
-        if (!hit || hit.distance > len - 2) return { x: px, z: pz };
-      }
+  /** Screen markers above enemies the player's crew can see. */
+  private enemyMarkers(frameDt: number): MarkerView[] {
+    const visible = this.awareness.update(frameDt);
+    const me = this.renderSync.pose(this.player);
+    const out: MarkerView[] = [];
+    for (const e of visible) {
+      const pose = this.renderSync.pose(e);
+      if (!pose || !me) continue;
+      const screen = this.project({ x: pose.pos.x, y: pose.pos.y + 3.4, z: pose.pos.z });
+      if (screen) out.push({ ...screen, distance: pose.pos.distanceTo(me.pos) });
     }
-    return this.findClearSpot(x - Math.sin(heading) * 140, z - Math.cos(heading) * 140, 10);
-  }
-
-  private findClearSpot(x: number, z: number, clearance: number): { x: number; z: number } {
-    for (let r = 0; r < 200; r += 6) {
-      for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
-        const px = x + Math.cos(a) * r;
-        const pz = z + Math.sin(a) * r;
-        const ok = this.map.obstacles.every((o) => Math.hypot(o.position.x - px, o.position.z - pz) > o.radius + clearance);
-        if (ok) return { x: px, z: pz };
-        if (r === 0) break;
-      }
-    }
-    return { x, z };
+    return out;
   }
 }

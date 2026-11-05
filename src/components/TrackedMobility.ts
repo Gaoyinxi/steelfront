@@ -22,6 +22,8 @@ export interface TrackedMobility {
   forwardSpeed: number;
   /** Integral brake-hold force per side [left, right] (N), used when a track is commanded to stop. */
   brakeHold: [number, number];
+  /** Integral lateral hold per side [left, right] (N): stops sideways creep on side slopes at low speed. */
+  lateralHold: [number, number];
   /** Derived suspension constants (computed at spawn). */
   springK: number;
   damperC: number;
