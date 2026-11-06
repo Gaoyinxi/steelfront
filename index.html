@@ -3,12 +3,59 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Steelfront Prototype</title>
-    <link rel="stylesheet" href="/src/ui/hud.css" />
+    <meta name="description" content="Steelfront — 原创二战风格浏览器坦克对战试玩版" />
+    <title>Steelfront 试玩版</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #11140f; overflow: hidden; }
+      #menu {
+        position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center;
+        background: radial-gradient(ellipse at 50% 35%, #2b3322 0%, #11140f 70%);
+        color: #e9edd8; font-family: 'Segoe UI', 'Noto Sans SC', system-ui, sans-serif;
+      }
+      #menu.hidden { display: none; }
+      #menu .card { width: min(560px, calc(100vw - 32px)); padding: 28px 32px; border-radius: 12px; background: rgba(10, 12, 9, 0.6); box-shadow: 0 8px 40px rgba(0,0,0,.5); }
+      #menu h1 { margin: 0; font-size: 40px; letter-spacing: .12em; color: #f2c14e; }
+      #menu .tag { margin: 4px 0 18px; color: rgba(233,237,216,.65); font-size: 14px; }
+      #menu p { margin: 0 0 14px; line-height: 1.6; font-size: 14px; }
+      #menu table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 18px; }
+      #menu td { padding: 3px 0; color: rgba(233,237,216,.8); }
+      #menu td:first-child { width: 120px; color: #e9edd8; font-weight: 600; }
+      #menu .diff { display: flex; gap: 10px; }
+      #menu button {
+        flex: 1; padding: 12px 8px; border-radius: 8px; border: 1px solid rgba(233,237,216,.3); background: rgba(233,237,216,.06);
+        color: #e9edd8; font-size: 15px; cursor: pointer; font-family: inherit;
+      }
+      #menu button small { display: block; font-size: 11px; color: rgba(233,237,216,.6); margin-top: 2px; }
+      #menu button:hover:not(:disabled) { border-color: #f2c14e; background: rgba(242,193,78,.12); }
+      #menu button:disabled { opacity: .45; cursor: wait; }
+      #menu .status { margin-top: 12px; min-height: 18px; font-size: 13px; color: rgba(233,237,216,.6); }
+      #menu .note { margin-top: 10px; font-size: 12px; color: rgba(233,237,216,.45); }
+    </style>
   </head>
   <body>
     <div id="app"></div>
     <div id="hud"></div>
+    <div id="menu">
+      <div class="card">
+        <h1>STEELFRONT</h1>
+        <div class="tag">原创二战风格坦克对战 · 试玩版</div>
+        <p>驾驶 Kestrel Mk.I 中型坦克，击毁全部 3 辆敌方坦克。利用地形和掩体，瞄准侧面与后部等薄弱装甲。</p>
+        <table>
+          <tr><td>W / S · A / D</td><td>前进、倒车 · 转向</td></tr>
+          <tr><td>鼠标 · 左键</td><td>瞄准（炮塔跟随）· 开火</td></tr>
+          <tr><td>右键按住 · 滚轮</td><td>炮镜视角 · 视距 / 倍率</td></tr>
+          <tr><td>1 / 2</td><td>穿甲弹 AP / 高爆弹 HE</td></tr>
+          <tr><td>Esc</td><td>暂停（释放鼠标）</td></tr>
+        </table>
+        <div class="diff">
+          <button data-skill="novice" disabled>新兵<small>反应慢、误差大</small></button>
+          <button data-skill="regular" disabled>常规<small>推荐</small></button>
+          <button data-skill="veteran" disabled>老兵<small>快速、精准</small></button>
+        </div>
+        <div class="status">正在加载…</div>
+        <div class="note">需要支持 WebGL2 的桌面浏览器（Chrome / Edge / Firefox），建议使用独立显卡。</div>
+      </div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

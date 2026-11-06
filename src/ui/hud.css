@@ -140,6 +140,14 @@ body {
   font-size: 18px;
   letter-spacing: 0.04em;
 }
+.hud-start {
+  text-align: center;
+  pointer-events: none;
+}
+.hud-start small {
+  font-size: 14px;
+  color: var(--hud-dim);
+}
 .hud-start.hidden {
   display: none;
 }

@@ -92,7 +92,7 @@ export class Hud {
     root.appendChild(this.fps);
 
     this.start = el('div', 'hud-start');
-    this.start.textContent = '点击画面开始（锁定鼠标）';
+    this.start.innerHTML = '<div><b>已暂停</b><br><small>点击画面进入战斗</small></div>';
     root.appendChild(this.start);
   }
 

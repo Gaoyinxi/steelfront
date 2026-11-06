@@ -33,6 +33,8 @@ import { gunPoseWorld } from './vehicleGeometry';
 
 export interface GameOptions {
   mapId: string;
+  /** AI difficulty profile id (data/ai); defaults to the map's setting. */
+  aiSkill?: string;
 }
 
 /**
@@ -110,7 +112,7 @@ export class Game {
     this.presenter = new CombatPresenter(this.sim, this.effects, this.hud, this.player);
 
     // Enemy AI platoon and win / lose conditions.
-    this.director = new MatchDirector(this.sim, this.data, mapDef, this.player);
+    this.director = new MatchDirector(this.sim, this.data, mapDef, this.player, opts.aiSkill);
     this.awareness = new PlayerAwareness(this.sim, this.player);
     this.sim.events.on('matchEnded', (ev) => {
       this.matchOver = true;
@@ -128,6 +130,8 @@ export class Game {
   }
 
   private fixedUpdate(dt: number, tick: number): void {
+    // Paused until the player clicks into the game, and whenever Esc releases the mouse.
+    if (!this.input.locked && !this.matchOver) return;
     const c = this.sim.world.getResource(PlayerControls);
     const key = (code: string) => (this.input.isDown(code) ? 1 : 0);
     c.throttle = key('KeyW') - key('KeyS');

@@ -3,6 +3,10 @@
 原创 WWII 风格 3D 载具对战原型。TypeScript + Vite + three.js + Rapier，单机运行。
 所有名称、模型与数据均为原创；第三方资源仅限 CC0 / MIT，登记于 `public/assets/LICENSES.md`。
 
+## 在线试玩
+
+https://gaoyinxi.github.io/steelfront/ （每次推送到 `main` 后由 GitHub Actions 自动构建发布）
+
 ## 运行
 
 ```bash

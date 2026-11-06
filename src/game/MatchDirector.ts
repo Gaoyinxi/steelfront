@@ -23,10 +23,11 @@ export class MatchDirector {
     data: GameData,
     private readonly mapDef: MapDef,
     private readonly player: Entity,
+    aiSkillOverride?: string,
   ) {
     const m = mapDef.match;
     const def = data.vehicles.get(m.enemyVehicle);
-    const skill = data.aiSkills.get(m.aiSkill);
+    const skill = data.aiSkills.get(aiSkillOverride ?? m.aiSkill);
     if (!def || !skill) throw new Error(`Map ${mapDef.id}: invalid match configuration`);
     const [bx, bz] = mapDef.spawns.teamB;
     const spread = Math.min(30, mapDef.spawns.clearRadius * 0.75);
