@@ -104,7 +104,11 @@ export class MobilitySystem implements System {
           contacts.push({ point: hit.point, normal: hit.normal, load: f, side: s, trackCentre });
         }
       }
-      if (contacts.length === 0) continue;
+      if (contacts.length === 0) {
+        mob.trackSpeed[0] = target[0];
+        mob.trackSpeed[1] = target[1];
+        continue;
+      }
 
       // --- Pass 2: traction ----------------------------------------------
       // Slip gains are capped so a wheel can cancel at most half of its mass
@@ -161,6 +165,12 @@ export class MobilitySystem implements System {
           limit: Math.max(limitLong, limitLat),
         });
       }
+      // Track ground speed per side (average over grounded road wheels), for animation.
+      for (let side = 0; side < 2; side++) {
+        const own = drives.filter((d) => d.side === side);
+        mob.trackSpeed[side] = own.length ? own.reduce((acc, d) => acc + d.vLong, 0) / own.length : target[side];
+      }
+
       // Integral brake hold: removes the steady-state creep of the purely
       // proportional slip controller when parked on a slope.
       for (let side = 0; side < 2; side++) {

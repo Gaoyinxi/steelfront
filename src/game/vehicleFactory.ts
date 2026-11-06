@@ -91,6 +91,7 @@ export function spawnVehicle(world: World, physics: PhysicsWorld, terrain: Heigh
     left: Array.from({ length: susp.wheelsPerSide }, wheel),
     right: Array.from({ length: susp.wheelsPerSide }, wheel),
     forwardSpeed: 0,
+    trackSpeed: [0, 0],
     brakeHold: [0, 0],
     lateralHold: [0, 0],
     springK,

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { createNoise2D } from 'simplex-noise';
 import { Rng } from '../../core/Rng';
 import type { HeightMap } from '../../world/HeightMap';
+import type { MaterialLibrary } from '../materials/MaterialLibrary';
 
 const GRASS_A = new THREE.Color(0x5d7a3a);
 const GRASS_B = new THREE.Color(0x77904a);
@@ -13,9 +14,11 @@ const ROCK = new THREE.Color(0x77736b);
  * Builds the terrain mesh directly from the HeightMap. Triangles use the same
  * diagonal split as the physics heightfield so visuals and collision agree.
  */
-export function createTerrainMesh(hm: HeightMap, seed: number): THREE.Mesh {
+export function createTerrainMesh(hm: HeightMap, seed: number, lib: MaterialLibrary): THREE.Mesh {
   const n = hm.resolution;
   const positions = new Float32Array(n * n * 3);
+  const uvs = new Float32Array(n * n * 2);
+  const tile = (lib.get('ground').userData.tile as number) ?? 4;
   const colors = new Float32Array(n * n * 3);
   const rng = new Rng(seed ^ 0x51ed);
   const tint = createNoise2D(() => rng.next());
@@ -28,6 +31,7 @@ export function createTerrainMesh(hm: HeightMap, seed: number): THREE.Mesh {
       const z = hm.worldZ(iz);
       const y = hm.heights[i];
       positions.set([x, y, z], i * 3);
+      uvs.set([x / tile, z / tile], i * 2);
 
       const slope = hm.slope(x, z);
       const t = tint(x / 90, z / 90) * 0.5 + 0.5;
@@ -62,12 +66,14 @@ export function createTerrainMesh(hm: HeightMap, seed: number): THREE.Mesh {
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
   geo.setIndex(new THREE.BufferAttribute(indices, 1));
   geo.computeVertexNormals();
   geo.computeBoundingSphere();
 
-  const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
-  const mesh = new THREE.Mesh(geo, mat);
+  // Large-scale colour from vertex colours, small-scale detail and relief
+  // from the tiled ground texture and its normal map.
+  const mesh = new THREE.Mesh(geo, lib.get('ground'));
   mesh.receiveShadow = true;
   mesh.name = 'terrain';
   return mesh;

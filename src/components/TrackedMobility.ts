@@ -20,6 +20,8 @@ export interface TrackedMobility {
   right: WheelState[];
   /** Signed forward speed in m/s (positive = forward). */
   forwardSpeed: number;
+  /** Ground speed of each track [left, right] (m/s, + forward); drives track/wheel animation. */
+  trackSpeed: [number, number];
   /** Integral brake-hold force per side [left, right] (N), used when a track is commanded to stop. */
   brakeHold: [number, number];
   /** Integral lateral hold per side [left, right] (N): stops sideways creep on side slopes at low speed. */

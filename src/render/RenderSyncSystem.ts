@@ -6,10 +6,9 @@ import { Turret } from '../components/Turret';
 import { Vehicle } from '../components/Vehicle';
 import { lerp, wrapAngle } from '../core/math';
 import type { Entity, World } from '../ecs/World';
-import { applyWreckLook, createTankView, type TankView } from './meshes/tankMesh';
+import { createTankModel, type TankView } from './meshes/tank/tankModel';
+import type { MaterialLibrary } from './materials/MaterialLibrary';
 import { VehicleStatus } from '../components/Modules';
-
-const TEAM_COLORS = { A: 0x5b6b3c, B: 0x8a7a55 } as const;
 
 export interface InterpolatedVehicle {
   pos: THREE.Vector3;
@@ -30,22 +29,25 @@ export class RenderSyncSystem {
   private readonly qa = new THREE.Quaternion();
   private readonly qb = new THREE.Quaternion();
 
-  constructor(private readonly scene: THREE.Scene) {}
+  constructor(
+    private readonly scene: THREE.Scene,
+    private readonly materials: MaterialLibrary,
+  ) {}
 
-  sync(world: World, alpha: number): void {
+  sync(world: World, alpha: number, frameDt: number): void {
     const seen = new Set<Entity>();
     for (const e of world.query(Vehicle, Transform, Turret, Gun)) {
       seen.add(e);
       let view = this.views.get(e);
       if (!view) {
         const v = world.req(e, Vehicle);
-        view = createTankView(v.def, TEAM_COLORS[v.team]);
+        view = createTankModel(v.def, v.team, this.materials);
         view.root.name = v.name;
         this.scene.add(view.root);
         this.views.set(e, view);
       }
       if (world.get(e, VehicleStatus)?.destroyed && !this.wrecked.has(e)) {
-        applyWreckLook(view);
+        view.setWrecked();
         this.wrecked.add(e);
       }
       const ip = this.interpolate(world, e, alpha);
@@ -56,8 +58,11 @@ export class RenderSyncSystem {
 
       const mob = world.get(e, TrackedMobility);
       if (mob) {
-        mob.left.forEach((w, i) => (view.wheels[0][i].position.y = view.wheelRestY + w.compression));
-        mob.right.forEach((w, i) => (view.wheels[1][i].position.y = view.wheelRestY + w.compression));
+        view.animate(
+          [mob.left.map((w) => w.compression), mob.right.map((w) => w.compression)],
+          mob.trackSpeed,
+          frameDt,
+        );
       }
     }
     for (const [e, view] of this.views) {

@@ -23,6 +23,7 @@ import { createObstacleMeshes } from '../render/meshes/obstacleMeshes';
 import { createTerrainMesh } from '../render/meshes/terrainMesh';
 import { Renderer } from '../render/Renderer';
 import { RenderSyncSystem } from '../render/RenderSyncSystem';
+import { MaterialLibrary } from '../render/materials/MaterialLibrary';
 import { PlayerInputSystem } from '../systems/PlayerInputSystem';
 import { Hud } from '../ui/Hud';
 import { buildGameMap, type GameMap } from '../world/GameMap';
@@ -73,9 +74,10 @@ export class Game {
 
     // --- Rendering ---------------------------------------------------------
     this.renderer = new Renderer(container);
-    this.renderer.scene.add(createTerrainMesh(this.map.height, mapDef.seed));
-    this.renderer.scene.add(createObstacleMeshes(this.map.obstacles));
-    this.renderSync = new RenderSyncSystem(this.renderer.scene);
+    const materials = new MaterialLibrary(this.renderer.gl.capabilities.getMaxAnisotropy());
+    this.renderer.scene.add(createTerrainMesh(this.map.height, mapDef.seed, materials));
+    this.renderer.scene.add(createObstacleMeshes(this.map.obstacles, this.map.height, materials, mapDef.seed));
+    this.renderSync = new RenderSyncSystem(this.renderer.scene, materials);
     this.cameraRig = new CameraRig(this.renderer.camera);
     this.hud = new Hud(hudRoot);
     this.effects = new Effects(this.renderer.scene);
@@ -142,7 +144,7 @@ export class Game {
 
   private render(alpha: number, frameDt: number): void {
     const world = this.sim.world;
-    this.renderSync.sync(world, alpha);
+    this.renderSync.sync(world, alpha, Math.min(frameDt, 0.1));
     this.projectileRenderer.sync(world, alpha);
     this.presenter.update(Math.min(frameDt, 0.1));
     this.effects.update(Math.min(frameDt, 0.1));
